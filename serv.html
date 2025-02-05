@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تقييم رسومات المستخدم</title>
+  <style>
+    body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  background: #f0f8ff;
+  color: #333;
+}
+
+.container {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  font-size: 24px;
+  color: #007acc;
+}
+
+input[type="file"] {
+  margin: 20px 0;
+  font-size: 16px;
+}
+
+canvas {
+  border: 2px solid #007acc;
+  border-radius: 10px;
+  margin: 20px 0;
+  height: 400px;
+  width: 300px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  color: #fff;
+  background: #007acc;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: #005f99;
+}
+
+p {
+  font-size: 18px;
+  margin-top: 20px;
+}
+img{
+  margin-left: 285px;
+}
+  </style>
+</head>
+<body>
+  
+  <div class="container">
+      <a href="cantact.html"><img src="icon.png" ></a>
+    <h1>تطبيق تقييم الرسومات</h1>
+    <input type="file" id="uploadInput" accept="image/*">
+    <canvas id="previewCanvas" width="200" height="200"></canvas>
+    <div class="buttons">
+      <button id="evaluateBtn">تقييم الرسم</button>
+    </div>
+    <p id="result"></p>
+  </div>
+  <script>
+    // بيانات التدريب (مع خمس صور إضافية)
+const trainingData = [
+  { imagePath: "images/drawing1.png", score: 1 },
+  { imagePath: "images/drawing2.png", score: 2 },
+  { imagePath: "images/drawing3.png", score: 5 },
+  { imagePath: "images/drawing4.png", score: 7 },
+  { imagePath: "images/drawing5.png", score: 9 },
+  { imagePath: "images/drawing6.png", score: 12 },
+  { imagePath: "images/drawing7.png", score: 14 },
+  { imagePath: "images/drawing8.png", score: 16 },
+  { imagePath: "images/drawing9.png", score: 18 },
+  { imagePath: "images/drawing10.png", score: 20 },
+  
+];
+
+// دالة تحليل الصورة
+function analyzeImage(canvas) {
+  const ctx = canvas.getContext("2d");
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const pixels = imageData.data;
+
+  let totalColors = new Set();
+  let brightness = 0;
+  let edgeCount = 0;
+  let pixelMatrix = [];
+
+  for (let y = 0; y < canvas.height; y++) {
+    let row = [];
+    for (let x = 0; x < canvas.width; x++) {
+      const index = (y * canvas.width + x) * 4;
+      const [r, g, b] = [pixels[index], pixels[index + 1], pixels[index + 2]];
+      const avg = Math.round((r + g + b) / 3);
+      row.push(avg);
+
+      brightness += 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      totalColors.add(`${r}-${g}-${b}`);
+    }
+    pixelMatrix.push(row);
+  }
+
+  // تحليل الحواف
+  for (let y = 1; y < pixelMatrix.length; y++) {
+    for (let x = 1; x < pixelMatrix[0].length; x++) {
+      const diffX = Math.abs(pixelMatrix[y][x] - pixelMatrix[y][x - 1]);
+      const diffY = Math.abs(pixelMatrix[y][x] - pixelMatrix[y - 1][x]);
+      if (diffX > 20 || diffY > 20) edgeCount++;
+    }
+  }
+
+  brightness /= (canvas.width * canvas.height);
+
+  return {
+    colorCount: totalColors.size,
+    brightness: brightness.toFixed(2),
+    edgeDensity: (edgeCount / (canvas.width * canvas.height)).toFixed(2),
+  };
+}
+
+// نموذج تعلم الآلي
+class CustomMLModel {
+  constructor() {
+    this.trainingData = [];
+  }
+
+  // إضافة بيانات التدريب
+  addTrainingData(features, label) {
+    this.trainingData.push({ features, label });
+  }
+
+  // حساب الفرق بين المميزات
+  calculateDifference(features1, features2) {
+    return (
+      Math.abs(features1.colorCount - features2.colorCount) +
+      Math.abs(features1.brightness - features2.brightness) +
+      Math.abs(features1.edgeDensity - features2.edgeDensity)
+    );
+  }
+
+  // التنبؤ بالنتيجة
+  predict(userFeatures) {
+    let closestMatch = null;
+    let minDifference = Infinity;
+
+    this.trainingData.forEach((data) => {
+      const difference = this.calculateDifference(userFeatures, data.features);
+      if (difference < minDifference) {
+        minDifference = difference;
+        closestMatch = data.label;
+      }
+    });
+
+    return closestMatch;
+  }
+}
+
+// إنشاء نموذج جديد
+const mlModel = new CustomMLModel();
+
+// تدريب النموذج باستخدام بيانات التدريب
+trainingData.forEach((data) => {
+  const img = new Image();
+  img.onload = function () {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+    const features = analyzeImage(canvas);
+    mlModel.addTrainingData(features, data.score);
+  };
+  img.src = data.imagePath;
+});
+
+// تحميل الصورة ومعاينتها
+document.getElementById("uploadInput").addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = new Image();
+      img.onload = function () {
+        const canvas = document.getElementById("previewCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// تقييم الرسم
+document.getElementById("evaluateBtn").addEventListener("click", () => {
+  if (mlModel.trainingData.length === 0) {
+    alert("لم يكتمل تدريب النموذج بعد. يرجى المحاولة لاحقًا.");
+    return;
+  }
+
+  const canvas = document.getElementById("previewCanvas");
+  const userFeatures = analyzeImage(canvas);
+
+  // التنبؤ باستخدام نموذج تعلم الآلي
+  const score = mlModel.predict(userFeatures);
+
+  // عرض النتيجة
+  document.getElementById("result").textContent = `تقييم الرسم: ${score} / 20`;
+});
+
+  </script>
+</body>
+</html>
