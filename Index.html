@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوت MangaNoon</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .header {
+            background-color: #0084FF;
+            color: white;
+            padding: 15px;
+            font-size: 24px;
+        }
+
+        .content {
+            margin: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .chat-button {
+            background-color: #0084FF;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .chat-button:hover {
+            background-color: #006bbf;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        🔹 دردش مع بوت MangaNoon 🔹
+    </div>
+
+    <div class="content">
+        <h2>مرحبًا بك في بوت MangaNoon!</h2>
+        <p>يمكنك التحدث مع البوت مباشرةً عبر ماسنجر من خلال الزر أدناه.</p>
+        <button class="chat-button" onclick="openChat()">💬 فتح الدردشة</button>
+    </div>
+
+    <!-- Facebook Chat Plugin -->
+    <div id="fb-root"></div>
+    <script async defer crossorigin="anonymous" 
+        src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v17.0" nonce="xyz">
+    </script>
+
+    <div class="fb-customerchat"
+         attribution="setup_tool"
+         page_id="547146808488064"
+         theme_color="#0084FF"
+         logged_in_greeting="مرحبًا! كيف يمكنني مساعدتك؟"
+         logged_out_greeting="مرحبًا! يرجى تسجيل الدخول للدردشة.">
+    </div>
+
+    <script>
+        function openChat() {
+            window.open('https://m.me/547146808488064', '_blank', 'width=400,height=600');
+        }
+    </script>
+
+</body>
+</html>
